@@ -153,7 +153,7 @@ except Exception as e:
     
     
     
-#statistical Analysis
+#======== Boxplots ======
 import os
 import pandas as pd
 import numpy as np
@@ -186,88 +186,3 @@ plt.tight_layout()
 plt.savefig("escape_force_boxplot.png")
 plt.show()
 
-# --- Shapiro-Wilk Test (Normality) ---
-print("\n🔍 Shapiro-Wilk Normality Test:")
-for label, df in data.items():
-    stat, p = shapiro(df["Escape Force (pN)"])
-    print(f"{label}: p = {p:.4f} {'(normal)' if p > 0.05 else '❌ not normal'}")
-
-# --- Levene’s Test (Homogeneity of variances) ---
-levene_stat, levene_p = levene(
-    data["0.1x"]["Escape Force (pN)"],
-    data["1x"]["Escape Force (pN)"],
-    data["1x_later"]["Escape Force (pN)"]
-)
-print(f"\n📏 Levene’s test for equal variances: p = {levene_p:.4f}")
-
-# --- Kruskal-Wallis Test (Non-parametric ANOVA) ---
-kruskal_stat, kruskal_p = kruskal(
-    data["0.1x"]["Escape Force (pN)"],
-    data["1x"]["Escape Force (pN)"],
-    data["1x_later"]["Escape Force (pN)"]
-)
-print(f"📊 Kruskal-Wallis test: p = {kruskal_p:.4f}")
-
-# --- Pairwise Mann-Whitney U Tests ---
-print("\n🧪 Pairwise Mann–Whitney U Tests:")
-groups = list(data.keys())
-for i in range(len(groups)):
-    for j in range(i+1, len(groups)):
-        g1, g2 = groups[i], groups[j]
-        stat, p = mannwhitneyu(
-            data[g1]["Escape Force (pN)"], 
-            data[g2]["Escape Force (pN)"], 
-            alternative='two-sided'
-        )
-        print(f"{g1} vs {g2}: p = {p:.4f}")
-        
-        
-import os
-import pandas as pd
-import numpy as np
-from scipy import stats
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# --- Load the Excel files ---
-folder_path = "/Users/jessica/Downloads/NMTT/CHEM324_DATA/Final/Analysis/"
-file_01x = pd.read_excel(os.path.join(folder_path, "0.1x_escape_summary.xlsx"))
-file_1x = pd.read_excel(os.path.join(folder_path, "1x_escape_summary.xlsx"))
-
-# --- Extract and clean the "Escape Force" values ---
-escape_01x = file_01x["Escape Force (pN)"].dropna().values
-escape_1x = file_1x["Escape Force (pN)"].dropna().values
-
-# --- Parametric ANOVA (F-test for two groups) ---
-anova_stat, anova_p = stats.f_oneway(escape_01x, escape_1x)
-print(f"🔬 ANOVA p-value (0.1x vs 1x): {anova_p:.4f}")
-
-# --- Permutation Test: difference in means ---
-observed_diff = np.mean(escape_1x) - np.mean(escape_01x)
-combined = np.concatenate([escape_1x, escape_01x])
-n_permutations = 10000
-perm_diffs = []
-
-for _ in range(n_permutations):
-    np.random.shuffle(combined)
-    perm_1x = combined[:len(escape_1x)]
-    perm_01x = combined[len(escape_1x):]
-    perm_diffs.append(np.mean(perm_1x) - np.mean(perm_01x))
-
-perm_diffs = np.array(perm_diffs)
-p_perm = np.mean(np.abs(perm_diffs) >= np.abs(observed_diff))
-print(f"🧪 Permutation test p-value: {p_perm:.4f}")
-print(f"Observed mean difference: {observed_diff:.4f} pN")
-
-# --- Plot the permutation test distribution ---
-plt.figure(figsize=(8, 5))
-sns.histplot(perm_diffs, kde=True, bins=50, color="skyblue")
-plt.axvline(observed_diff, color='red', linestyle='--', label=f'Observed Δ = {observed_diff:.4f}')
-plt.axvline(-observed_diff, color='red', linestyle='--')
-plt.title("Permutation Test: Difference in Means (1x vs 0.1x)")
-plt.xlabel("Mean Difference (pN)")
-plt.ylabel("Frequency")
-plt.legend()
-plt.tight_layout()
-plt.savefig("permutation_test_force.png")
-plt.show()
