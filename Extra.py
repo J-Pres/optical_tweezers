@@ -8,6 +8,7 @@ Created on Tue May 13 18:26:29 2025
 import cv2
 import os
 
+#==========Spit out frames as images====================
 # --- Set path to your .avi video
 video_path = "/Users/jessica/Downloads/NMTT/CHEM324_DATA/bug/Tepache_1x_glucose/85mA_20250512_tepache_1x_glucose_8.avi"
 
